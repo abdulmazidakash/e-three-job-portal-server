@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 3000 ;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 //middleware
@@ -13,7 +13,7 @@ app.use(express.json());
 
 
 const uri = `mongodb+srv://${process.env.DB_PASS}:${process.env.DB_USER}@cluster0.j0hxo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-console.log(uri);
+
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -28,6 +28,31 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+	const jobsCollection = client.db('threeJobPortal').collection('threeJobs');
+
+
+
+	//get all jobs data
+	app.get('/jobs', async(req, res)=>{
+		const cursor = jobsCollection.find();
+		// console.log(cursor);
+		const result = await cursor.toArray();
+		// console.log(result);
+		res.send(result);
+	})
+
+	//get job details
+	app.get('/jobs/:id', async(req, res)=>{
+		const id = req.params.id;
+		// console.log(id);
+		const query = { _id: new ObjectId(id)};
+		const result = await jobsCollection.findOne(query);
+		// console.log(result);
+		res.send(result);
+	})
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
