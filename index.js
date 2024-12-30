@@ -10,7 +10,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 //middleware
 app.use(cors({
-	origin: ['http://localhost:5173', 'http://localhost:5174', 'https://three-job-portal.firebaseapp.com', 'https://three-job-portal.web.appthree-job-portal.web.app' ],
+	origin: ['http://localhost:5173', 'http://localhost:5174', 'https://three-job-portal.firebaseapp.com', 'https://three-job-portal.web.appthree-job-portal.web.app', 'https://three-job-portal.netlify.app' ],
 	credentials: true,
 }))
 app.use(express.json());
@@ -60,7 +60,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
 	const jobsCollection = client.db('threeJobPortal').collection('threeJobs');
 	const jobApplicationCollection = client.db('threeJobPortal').collection('jobs_collection');
@@ -73,7 +73,8 @@ async function run() {
 		res
 		.cookie('token', token, {
 			httpOnly: true,
-			secure: false,
+			secure: process.env.NODE_ENV=== 'production',
+			sameSite: process.env.NODE_ENV === 'production' ? 'none': 'strict',
 
 		})
 		// .send(token);
@@ -86,7 +87,8 @@ async function run() {
 		res
 		.clearCookie('token', {
 			httpOnly: true,
-			secure: false,
+			secure: process.env.NODE_ENV=== 'production',
+			sameSite: process.env.NODE_ENV === 'production' ? 'none': 'strict',
 		})
 		.send({success: true})
 	})
@@ -231,8 +233,8 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
