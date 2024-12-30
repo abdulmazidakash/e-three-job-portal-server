@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser')
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 3000 ;
@@ -9,6 +11,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 //middleware
 app.use(cors())
 app.use(express.json());
+app.use(cookieParser());
 
 
 
@@ -33,6 +36,20 @@ async function run() {
 	const jobApplicationCollection = client.db('threeJobPortal').collection('jobs_collection');
 
 
+	//auth related apis
+	app.post('/jwt', async(req, res)=>{
+		const user = req.body;
+		const token = jwt.sign(user, process.env.JWT_TOKEN, {expiresIn: '1h'});
+		res
+		.cookie('token', token, {
+			httpOnly: true,
+			secure: false,
+
+		})
+		// .send(token);
+		.send({success: true})
+
+	})
 
 	// //get all jobs data
 	// app.get('/jobs', async(req, res)=>{
