@@ -9,14 +9,43 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 //middleware
-app.use(cors())
+app.use(cors({
+	origin: ['http://localhost:5173', 'http://localhost:5174'],
+	credentials: true,
+}))
 app.use(express.json());
 app.use(cookieParser());
 
+//jwt token middleware
+const logger = (req, res, next) =>{
+	console.log('inside the logger');
+
+	next();
+}
+
+const verifyToken = (req, res, next) =>{
+	// console.log('inside verify token middleware', req.cookies);
+
+	const token = req?.cookies?.token;
+
+	if(!token){
+		return res.status(401).send({message: 'unauthorized access'});
+	}
+
+	jwt.verify(token, process.env.JWT_TOKEN, (err, decoded) =>{
+
+		if(err){
+			return res.status(401).send({message: 'unauthorized access'});
+		}
+
+		req.user = decoded;
+		next();
+	})
+
+}
 
 
-const uri = `mongodb+srv://${process.env.DB_PASS}:${process.env.DB_USER}@cluster0.j0hxo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.j0hxo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -39,7 +68,7 @@ async function run() {
 	//auth related apis
 	app.post('/jwt', async(req, res)=>{
 		const user = req.body;
-		const token = jwt.sign(user, process.env.JWT_TOKEN, {expiresIn: '1h'});
+		const token = jwt.sign(user, process.env.JWT_TOKEN, {expiresIn: '1d'});
 		res
 		.cookie('token', token, {
 			httpOnly: true,
@@ -69,7 +98,9 @@ async function run() {
 	// })
 
 	// Get all jobs data
-	app.get('/jobs', async (req, res) => {
+	app.get('/jobs', logger, async (req, res) => {
+
+		// console.log('now inside api callback');
 		const email = req.query.email;
 		const query = {};  // Initialize the query object
 		if (email) {
@@ -142,9 +173,15 @@ async function run() {
 
 
 	//specific user data get
-	app.get('/job-application', async(req, res) =>{
+	app.get('/job-application', verifyToken, async(req, res) =>{
 		const email = req.query.email;
 		const query = { applicant_email: email};
+
+		if(req.user.email !== req.query.email){
+			return res.status(403).send({message: 'forbidden access'})
+		}
+
+		// console.log('cuk cuk cookies', req.cookies);
 		const result = await jobApplicationCollection.find(query).toArray();
 
 
@@ -154,7 +191,7 @@ async function run() {
 
 			const query1 = { _id: new ObjectId(application.job_id)};
 			const job = await jobsCollection.findOne(query1);
-			console.log(job);
+			// console.log(job);
 
 			if(job){
 				application.title = job.title;
