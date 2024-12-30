@@ -10,7 +10,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 //middleware
 app.use(cors({
-	origin: ['http://localhost:5173', 'http://localhost:5174'],
+	origin: ['http://localhost:5173', 'http://localhost:5174', 'https://three-job-portal.firebaseapp.com', 'https://three-job-portal.web.appthree-job-portal.web.app' ],
 	credentials: true,
 }))
 app.use(express.json());
@@ -45,9 +45,8 @@ const verifyToken = (req, res, next) =>{
 }
 
 
-const uri = `mongodb+srv://${process.env.DB_PASS}:${process.env.DB_USER}@cluster0.j0hxo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.j0hxo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.j0hxo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -80,6 +79,16 @@ async function run() {
 		// .send(token);
 		.send({success: true})
 
+	})
+
+	//jwt logout token clear cookie
+	app.post('/logout', (req, res) =>{
+		res
+		.clearCookie('token', {
+			httpOnly: true,
+			secure: false,
+		})
+		.send({success: true})
 	})
 
 	// //get all jobs data
