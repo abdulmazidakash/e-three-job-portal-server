@@ -10,7 +10,16 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 //middleware
 app.use(cors({
-	origin: ['http://localhost:5173', 'http://localhost:5174', 'https://three-job-portal.firebaseapp.com', 'https://three-job-portal.web.appthree-job-portal.web.app', 'https://three-job-portal.netlify.app', 'https://three-job-portal-server.vercel.app' ],
+	origin: [
+		'http://localhost:5173', 
+		'http://localhost:5174', 
+		'https://three-job-portal.web.app' ,
+		'https://three-job-portal.firebaseapp.com', 
+		'https://three-job-portal.web.appthree-job-portal.web.app', 
+		'https://three-job-portal.netlify.app',
+		'https://three-job-portal-server.vercel.app', 
+		
+	],
 	credentials: true,
 }))
 app.use(express.json());
