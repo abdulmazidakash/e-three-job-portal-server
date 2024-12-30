@@ -60,7 +60,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
 	const jobsCollection = client.db('threeJobPortal').collection('threeJobs');
 	const jobApplicationCollection = client.db('threeJobPortal').collection('jobs_collection');
@@ -111,16 +111,42 @@ async function run() {
 	// })
 
 	// Get all jobs data
-	app.get('/jobs', logger, async (req, res) => {
+	app.get('/jobs', async (req, res) => {
 
 		// console.log('now inside api callback');
 		const email = req.query.email;
-		const query = {};  // Initialize the query object
+		const sort = req.query?.sort;
+		const search = req.query?.search;
+		const min = req.query?.min;
+		const max = req.query?.max;
+
+		let query = {};  // Initialize the query object
+		let sortQuery = {};
+
+		//some query related code 
+		console.log(req.query);
 		if (email) {
 		query.hr_email = email;  // Modify the existing query object
 		}
 
-		const cursor = jobsCollection.find(query);
+		if(sort == 'true'){
+			sortQuery= {'salaryRange.min': -1}
+		}
+
+		if(search){
+			query.location= { $regex: search, $options: 'i'}
+		}
+		// console.log(search);
+		if(min && max){
+			query = {
+				...query,
+				"salaryRange.min": { $gte: parseInt(min)},
+				"salaryRange.max": { $lte: parseInt(max)},
+
+			}
+		}
+
+		const cursor = jobsCollection.find(query).sort(sortQuery);
 		const result = await cursor.toArray();
 		res.send(result);
 		});
@@ -145,7 +171,7 @@ async function run() {
 		const id = application.job_id;
 		const query = { _id: new ObjectId(id)};
 		const job = await jobsCollection.findOne(query);
-		console.log(job);
+		// console.log(job);
 		let newCount = 0;
 		if(job.applicationCount){
 			newCount = job.applicationCount + 1;
@@ -200,7 +226,7 @@ async function run() {
 
 		//fokira way to aggregate data 
 		for(const application of result){
-			console.log(application.job_id);
+			// console.log(application.job_id);
 
 			const query1 = { _id: new ObjectId(application.job_id)};
 			const job = await jobsCollection.findOne(query1);
